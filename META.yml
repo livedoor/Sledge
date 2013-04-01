@@ -1,0 +1,38 @@
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         Sledge
+version:      1.11
+version_from: lib/Sledge.pm
+installdirs:  site
+requires:
+    Apache::Reload:                0
+    Apache::Request:               0
+    Carp::Assert:                  0
+    CGI:                           2.47
+    Class::Accessor:               0
+    Class::Data::Inheritable:      0
+    Class::Fields:                 0
+    Class::Singleton:              0
+    Class::Trigger:                0
+    Data::Properties:              0
+    Digest::SHA1:                  0
+    Errno:                         0
+    Error:                         0.15
+    File::Spec:                    0
+    File::Temp:                    0
+    HTML::FillInForm:              0
+    HTML::StickyQuery:             0
+    HTML::Template:                0
+    IO::Stringy:                   0
+    Jcode:                         0
+    LWP:                           0
+    Storable:                      0
+    Template:                      0
+    Test::Harness:                 0
+    Test::Inline:                  0
+    Test::Simple:                  0
+    Time::HiRes:                   0
+    URI:                           0
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.17

@@ -1,0 +1,107 @@
+=head1 NAME
+
+Sledge::Doc::Install - Sledge フレームワークの導入に必要な作業
+
+=head1 DESCRIPTION
+
+Sledge の初期インストールに必要な作業を解説しています。
+
+=head1 INSTALL SLEDGE
+
+Sledge フレームワークに必要とされる CPAN モジュールをインストールする
+スクリプトが cpan_install.pl としておいてありますので、root で実行して
+ください。
+
+  # ./eg/cpan_install.pl
+
+それ以外に、mod_perl がインストールされていることが必要です。
+
+次に、Sledge モジュールをインストールします。
+
+  % perl Makefile.PL
+  % make
+  % make test
+  # make install
+
+=head1 SET UP YOUR PROJECT
+
+プロジェクト用のスケルトンモジュールを作成します。ここではプロジェクト
+名を HelloWorld とします。
+
+ウィザードツール sledge-setup を利用してスケルトンを作成します。
+(適宜 rehash などしてパスを読み込み直してください。)
+
+  % rehash
+  % sledge-setup HelloWorld
+  mkdir HelloWorld
+  mkdir HelloWorld/Config
+
+  Initial setup for HelloWorld is now finished.
+
+  Remember:
+
+  1) Edit HelloWorld/Config/_common.pm
+  2) Make session table.
+
+      Thanks for using Sledge!
+                - Sledge development team
+
+=head2 EDIT CONFIG FILE
+
+表示されているとおり、_common.pm をまず編集する必要があります。
+
+  $C{TMPL_PATH}     = '/path/to/tmpl_dir';
+
+テンプレートのパスを指定します。
+
+  $C{DATASOURCE}    = [ 'dbi:mysql:sledge','root', '' ];
+
+セッション管理に必要なDSN を Anonymous Array で指定します。
+
+  $C{COOKIE_NAME}   = 'sledge_sid';
+  $C{COOKIE_PATH}   = '/';
+
+セッション Cookie の名前、パスを設定します。いじらなくてもOKです。
+
+  $C{COOKIE_DOMAIN} = undef;
+
+Cookie のドメインを指定します。undef の場合、ドメインなしの Cookie が
+はかれます。なるべく設定した方が良いでしょう。
+
+また、デフォルトでは /etc/HelloWorld-conf.pl というファイルから Config 
+ファイルの設定を読み込むようになっています。このファイルを
+
+  $ENV{SLEDGE_CONFIG_NAME} = 'staging';
+  1;
+
+のように記述すると、_common.pm に *加えて*、staging.pm の内容も設定と
+して読み込まれます。この /etc/HelloWorld-conf.pl の内容を、開発/プロダ
+クション環境で入れかえることによって、設定変数を切り替えることが出来ま
+す。
+
+このファイルを使用せず、httpd.conf に
+
+  PerlSetEnv SLEDGE_CONFIG_NAME production
+
+のように設定することも可能です。  
+
+=head2 SETUP DATABASE
+
+セッション管理にMySQL を採用する場合(デフォルト)は、セッション用のテー
+ブルが必要です。Config に指定したデータベース内に、sessions テーブルを
+作成してください。eg/sessions.sql にサンプルがあります。
+
+  > mysql -uroot
+  mysql> create database sledge;
+  mysql> use sledge
+  mysql> create table sessions (
+  id char(32) not null primary key,
+  a_session text,
+  timestamp timestamp
+  );
+
+=head1 AUTHOR
+
+Tatsuhiko Miyagawa <miyagawa@edge.co.jp> with Sledge Developpers.
+
+=cut

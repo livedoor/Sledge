@@ -1,0 +1,369 @@
+=head1 NAME
+
+Sledge::Doc::FAQ - Sledge FAQ
+
+=head1 DESCRIPTION
+
+Sledge よくある質問と答え
+
+=head1 QUESTIONS
+
+=head2 INSTALL
+
+=over 4
+
+=item Q.
+
+CPAN shell が perl 5.6.1 をインストールしようとする。
+
+=item A.
+
+CPAN モジュールを最新にしてください。
+
+  cpan> look CPAN
+  # perl Makefile.PL ; make install
+  # exit
+  cpan> reload cpan 
+
+=item Q.
+
+CGI環境で利用できるか
+
+=item A.
+
+0.03 以降で利用できます。Pages ベースクラスで、
+
+  use Sledge::Pages::Compat;
+
+のようにしてください。環境変数にあわせて、どちらかを自動で継承します。
+
+=back
+
+=head2 SLEDGE FRAMEWORK
+
+=over 4
+
+=item Q.
+
+ひとつのサーバで、複数の Sledge プロジェクトを利用できるか
+
+=item A.
+
+できます。
+
+mod_perl 環境でも、プロジェクトの名前がことなっていれば、問題なく動作
+します。CGI版でもとくに問題ありません。
+
+=item Q.
+
+HTTP - HTTPS 間でのリダイレクトさせたい。
+
+=item A.
+
+redirect() メソッドの第2引数に scheme (http || https) を追加すると、そ
+のスキームにリダイレクトします。パスの変換などが必要な場合は、
+redirect() や current_url() をオーバーライドしてください。
+
+=item Q. FillInForm を止めたい
+
+=item A.
+
+fillin_form() アクセサで false をセットする。
+
+デフォルトでは、$r->method eq 'POST' の場合に fillin_form が有効になり
+ます。無効にするには、$self->fillin_form(undef); を明示的に呼び出しま
+す。dispatch_* のどこで実行してもOKです。
+
+利用するクラス内の全 dispatch_* メソッドでとめたい場合は、
+
+  sub fillin_form { undef }
+
+としてください。
+
+=item Q.
+
+ページ内にいくつかフォームが存在するが、FillInForm で埋め込むフォーム
+は1個だけにしたい。
+
+=item A.
+
+fillin_form() インスタンスの属性にセットします。
+
+Sledge::FillInForm のインスタンスを、fillin_form 属性にもっています。
+
+  $self->fillin_form->target('foo');
+
+と呼び出すと、E<lt>FORM name="foo"E<gt> な FORM のみがFillin の対象に
+なります。
+
+ただ、上記を GET のときに実行すると、以下のようなエラーがでます。
+
+  Can't call method "target" on an undefined value at ...
+
+これはデフォルトで GET の場合は fillin しないようになっているためで、
+GET でこの文がランタイムエラーにならないためには、load_fillin_form() 
+を先に呼び出しておいて POST と同じ状態にしておく、もしくは、
+
+  $self->fillin_form->target('main') if defined $self->fillin_form;
+
+としてください。
+
+=item Q.
+
+FillInForm に渡す foject を追加したい。
+
+=item A.
+
+fillin_form->add_fobjet() メソッドで追加できます。
+
+  $self->fillin_form->add_fobject($fobject);
+
+これも上記同様、GET でエラーにならないよう注意してください。
+
+=item Q.
+
+GET のときに fillin_form を有効にしたい。
+
+=item A.
+
+load_fillin_form() を明示的に呼び出すと、POST と同様の状態になります。
+
+  $self->load_fillin_form();
+
+=item Q.
+
+対応するテンプレートファイルが存在しない .cgi をつくってもよいか
+
+=item A.
+
+問題ありません。
+
+ただし、dispatch() が終了するまでに、load_template() もしくは 
+redirect() を実行する必要があります。そうしないと、最後の tmpl->output 
+で例外が発生します。
+
+=item Q.
+
+セッション管理は必要ない
+
+=item A.
+
+construct_session をオーバーライドしてください。
+
+  package YourProject::Pages;
+  sub construct_session { }
+
+=item Q.
+
+upload ファイルを扱うには
+
+=item A.
+
+mod_perl 環境, CGI 環境とも $self->r->upload('uploadname') でUpload オ
+ブジェクトが取得でき、そこから fh メソッドにてハンドルが取得できます。
+
+  my $upload = $self->r->upload('uploadfile');
+  $upload->link("/path/to/savefile");
+  my $fh = $upload->fh;
+  while (<$fh>) { do_something($fh); }
+
+詳細は perldoc Apache::Request, perldoc CGI をみてください。
+
+=item Q.
+
+ファイルダウンロードをさせるプログラムを書くにはどうすればいいか
+
+=item A.
+
+テンプレートを出さず、また HTTP ヘッダを自前で出力する必要があります。
+$data に含まれた pdf データをダウンロードさせるサンプルを以下に示しま
+す。
+
+  sub dispatch_download {
+      my $self = shift;
+      my $data = $self->fetch_pdf_data;
+      my $filename= 'test.pdf';
+      $self->r->content_type("application/download; name=$filename");
+      $self->r->header_out('Content-Disposition' => "attachment; filename=$filename");
+      $self->r->send_http_header;
+      print $data;
+      $self->finished(1);
+  }
+
+finished() を呼び出して、後処理であるヘッダ、テンプレート出力を回避します。
+
+=item Q.
+
+MySQL の sessions テーブルが肥大化するが、そういうものですか
+
+=item A.
+
+そういうものです。timestamp カラムをつけて、以下のようなSQL文で定期的
+にクリーンアップするとよいでしょう。
+
+  DELETE FROM sessions WHERE timestamp < SUBDATE(NOW(), INTERVAL 2 HOUR)
+
+=item Q.
+
+dispatch_fooが終わった時点でセッションデータを削除したいのですが
+
+=item A.
+
+AFTER_DISPATCH フックに追加して下さい。
+
+  $self->register_hook(AFTER_DISPATCH => sub {
+      my $self = shift;
+      $self->session->remove('foo');
+  });
+
+くわしくは Sledge::Doc::Hooks をみてください。
+
+=item Q.
+
+独自に Cookie を使いたい
+
+=item A.
+
+セッションで解決できない永続 Cookie を使う場合は、header_out でセット
+できます。
+
+  use CGI::Cookie;
+  my $cookie = CGI::Cookie->new({ ... });
+  $self->r->header_out('Set-Cookie' => $cookie);
+
+=item Q.
+
+別ディレクトリのテンプレートを読みこむには?
+
+=item A.
+
+エラー発生したら、共通のエラー画面 $TMPL_PATH/error.html を読みこみた
+い、というケースがあると思います。load_template() メソッドでテンプレー
+トの中身をすり替えることができますが、
+
+  $self->load_template('../error');
+
+などと、カレントディレクトリを意識しなくてはいけません。/ から記述すれ
+ば、virtual パスとして読みこめます。
+
+  sub display_error {
+      my $self = shift;
+      $self->load_template('/error');
+  }
+
+この場合、Config の TMPL_PATH 直下の error.html が読みこまれます。
+
+=item Q.
+
+GET/POST で処理をわけたい。
+
+=item A.
+
+POST アクセスの場合は、post_dispatch_foo が先に実行されます。
+
+=item Q.
+
+post_dispatch_foo のあとに、dispatch_foo を実行したくない。
+
+=item A.
+
+C<output_content> メソッドを呼び出してください。C<finished(1)> は不要
+です。
+
+  sub post_dispatch_foo {
+      my $self = shift;
+      $self->output_content;
+  }
+
+=item Q.
+
+POST メソッドが事情により使えないのだけど、処理は分岐させたい。
+
+=item A.
+
+is_post_request メソッドをオーバーライドしてください。
+
+  sub is_post_request {
+      my $self = shift;
+      return $self->r->param('.post');
+  }
+
+この場合 foo.cgi?.post=1 なら POSTメソッドと見なされます。
+
+
+=item Q.
+
+FillinForm に param() を実装したオブジェクトではなく、ハッシュを渡したい
+
+=item A.
+
+  $self->fillin_form->fdat(\%fdat);
+
+としてください。fdat をセットした場合、object は無視されるので注意して
+ください。
+
+=back
+
+=head2 TROUBLE SHOOTING
+
+=over 4
+
+=item Q.
+
+こんなエラーがでます。
+
+  Can't use string ("Foo::Config") as a HASH ref while "strict refs" 
+  in use at /usr/local/lib/perl5/site_perl/5.005/Sledge/Config.pm line 40.
+
+=item A.
+
+Class::Singleton モジュールがインストールされているか確認してください。
+そうでなければ、Foo::Config モジュールの呼び出し方が間違っています。
+
+=item Q.
+
+こんなエラーがでます。
+
+  Can't call method "param" on an undefined value at
+  /usr/local/apache/site_perl/HelloWorld/Pages/Index.pm line 6.
+
+=item A.
+
+該当行が
+
+  $self->tmpl->param()
+
+となっているのであれば、テンプレートファイルがロードできていません。テ
+ンプレートパスとファイル名が正しいか確認してください。
+
+=item Q.
+
+Config の内容が反映されない。Apache::StatINC を使っているのだが。
+
+=item A.
+
+Class::Singleton が原因です。Class::Singleton のかわりに 
+Apache::Singleton を継承すると、リクエストごとにインスタンスをクリアす
+るようになります。若干パフォーマンスは下がりますが、ほとんど影響はない
+でしょう。
+
+=item Q.
+
+テンプレートでセットした hidden などの FORM 値が、POST された値で上書
+きされてしまう。
+
+=item A.
+
+上記 fillin_form の項目をみてください。
+
+=back
+
+=head1 VERSION
+
+$Revision: 1.2 $
+
+=head1 AUTHOR
+
+Tatsuhiko Miyagawa <miyagawa@edge.co.jp> with Sledge Developers.
+
+=cut

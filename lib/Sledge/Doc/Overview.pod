@@ -1,0 +1,87 @@
+=head1 NAME
+
+Sledge::Doc::Overview - Sledge フレームワーク概観
+
+=head1 DESCRIPTION
+
+Sledge フレームワークのアーキテクチャについて簡単に説明しています。
+
+
+=head1 LIFELINE
+
+Web サーバにやってきたHTTPリクエストを以下の順に処理します。(以下は概
+要であり、実装とは異なる部分があります)
+
+=over 4
+
+=item *
+
+mod_perl (Apache::Registry) もしくは CGI スクリプトがトリガとなってアプリケーション(Pages)を起動
+
+=item *
+
+プラグインのロード(任意)
+
+=item *
+
+Sledge::Pages オブジェクトの生成
+
+=item *
+
+アプリケーションのConfig初期化
+
+=item *
+
+HTTPリクエストのパラメータ処理
+
+=item *
+
+各Factoryオブジェクトの初期化
+
+=item *
+
+セッションIDの取得/発行
+
+=item *
+
+ストレージからのセッションの復元
+
+=item *
+
+ページにアクセスする権利を認証
+
+=item *
+
+文字コードのフィルタリング
+
+=item *
+
+テンプレートエンジンのロード
+
+=item *
+
+アプリケーションクラスへのDispatch
+
+=item *
+
+テンプレートエンジンの実行
+
+=item *
+
+スティッキーフォームの生成(必要に応じて)
+
+=item *
+
+出力コンテンツのフィルタリング
+
+=item *
+
+サーバにレスポンスを返す
+
+=back
+
+=head1 AUTHOR
+
+Tatsuhiko Miyagawa <miyagawa@edge.co.jp> with Sledge Developers.
+
+=cut

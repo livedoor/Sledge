@@ -1,0 +1,60 @@
+=head1 NAME
+
+Sledge::Doc::Hooks - Sledge Hooks の使い方
+
+=head1 DESCRIPTION
+
+Sledge の Hook の利用法について解説しています。
+
+=head1 HOOKS
+
+現時点で利用可能な hook フェーズは以下の通り
+
+  AFTER_INIT
+  BEFORE_DISPATCH
+  AFTER_DISPATCH
+  AFTER_OUTPUT
+
+=head1 REGISTERING HOOKS
+
+hook はクラスの継承、インスタンスごとの hook に対応しています。従来の 
+after_dispatch のような使い方をするには、クラスメソッドとして hook を
+登録します。
+
+  package Test::Pages::Bar;
+
+  __PACKAGE__->register_hook(
+      AFTER_DISPATCH => sub {
+         my $self = shift;
+         # ...
+      },
+  );
+
+のようにできます。hook に渡ってくる引数は、実行時の Pages のインスタン
+スです。１つのフェーズに複数のサブルーチンを登録した場合、順番に実行さ
+れます。
+
+ここで登録した hook は、Test::Pages::Bar を継承したクラスすべてで有効
+になります。
+
+ある Pages インスタンスだけで hook を有効にしたい場合は、オブジェクト
+メソッドとして呼び出します。
+
+  sub dispatch_login {
+      my $self = shift;
+      $self->regiter_hook(AFTER_DISPATCH => sub { warn "OK" });
+  }
+
+この場合、他の dispatch_* メソッドでは影響がありません。dispatch_* の
+中からクラスメソッドの register_hook を実行してしまうと、hook がどんど
+ん push されるので注意して下さい。
+
+VERSION 0.16 以降では、より汎用化された Class::Trigger への thin
+wrapper として動作しています。Class::Trigger のドキュメントやソースコー
+ドも参考にしてください。
+
+=head1 AUTHOR
+
+Tatsuhiko Miyagawa <miyagawa@edge.co.jp> with Sledge Developers.
+
+=cut

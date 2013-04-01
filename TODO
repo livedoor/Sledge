@@ -1,0 +1,30 @@
+$Id: TODO,v 1.2 2003/02/17 10:33:45 miyagawa Exp $
+
+[Bug Fix]
+* Sledge::Session::DBI の connection が Pooling されない
+* Apache::Reload を使用すると hook が二重登録される
+* Pages::LivingDead は不要
+
+[Enhancement]
+* More Document
+* More Samples
+* Install.pm のパッチとりこみ
+* $r->upload->link() を portable に
+* redirect() の先頭に固定パスを付加できるように
+* ページに論理名をつける forward() メソッドを実装
+* セッションの名前空間衝突の制御
+* Exception Handler の実装
+
+[Plugins]
+* Dispatcher の公開
+* Plugin::Validation の公開とAPI強化
+* Plugin::Maintenance (メンテナンス中画面)
+* Plugin::Token (ページ遷移強制)
+* Plugin::Payment (決済遷移プラグイン Business::OnlinePayment?)
+* Plugin::PAR (Apache::PAR 対応)
+* Plugin::FormMail
+* Plugin::XMLXSLT (XML-XSLT変換)
+* Plugin::CMS (簡易CMSシステム)
+* Plugin::Wiki (WikiWikiWeb)
+* Plugin::Blog (Weblog)
+

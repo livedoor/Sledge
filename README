@@ -1,0 +1,10 @@
+Sledge - Opensource Web Application Framework
+$Id: README,v 1.1.1.1 2003/02/13 06:59:36 miyagawa Exp $
+
+Sledge はオープンソースのWebアプリケーションフレームワークです。
+インストール方法については INSTALL ファイルをご覧ください。
+ライセンスについてはLICENSEファイルをご覧ください。
+
+詳しい情報や各種プラグインについては Sledge Webサイト
+http://sl.edge.jp/
+を参照してください。

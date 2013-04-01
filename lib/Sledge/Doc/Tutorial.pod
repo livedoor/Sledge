@@ -1,0 +1,174 @@
+=head1 NAME
+
+Sledge::Doc::Tutorial - Sledge フレームワークの使い方
+
+=head1 DESCRIPTION
+
+Sledge ビギナー向けチュートリアル
+
+=head1 FIRST STEP
+
+インストールとプロジェクトセットアップは Sledge::Doc::Install で解説し
+ていますので、参照してください。
+
+ここでは、HelloWorld プロジェクトを作成、プロジェクトのベースディレク
+トリを /usr/local/hw として表記します。実際には、該当するプロジェクト
+ディレクトリに読みかえてください。
+
+典型的なディレクトリ構成は以下のようになります。
+
+  /usr/local/hw/lib		Perl モジュール
+  /usr/local/hw/htdocs		Docroot, .cgi トリガ置場
+  /usr/local/hw/template	テンプレートファイル
+
+=head2 PERL MODULES
+
+setup スクリプトによって作成された、HelloWorld ディレクトリを、
+/usr/local/hw/lib に mv します。
+
+  % mv HelloWorld /usr/local/hw/lib
+  
+/usr/local/hw/lib が、@INC に含まれる(Perl モジュールのインクルードパ
+ス) ように設定してください。
+
+  1) setenv PERL5LIB=/usr/local/hw/lib
+  2) use lib
+  3) /usr/local/lib/perl5/lib から symlink
+
+といった方法があります。1) が最もお手軽です。httpd.conf にて設定する場
+合は、
+
+  SetEnv PERL5LIB /usr/local/hw/lib
+  PerlSetEnv PERL5LIB /usr/local/hw/lib
+
+とします。上が CGI環境、下が mod_perl 環境向けの設定です。
+
+=head2 CGI FILES
+
+Sledge フレームワークでは、.cgi は Apache::Registry から起動し、Pages 
+クラスのトリガとして動作します。/usr/local/hw/htdocs/index.cgi を以下のよう
+に記述します。
+
+  #!/usr/local/bin/perl
+  use strict;
+  use HelloWorld::Pages::Index;
+
+  HelloWorld::Pages::Index->new->dispatch('index');
+
+HelloWorld::Pages は、プロジェクトの Pages ベースクラスとして動作しま
+す。このクラスに dispatch_ メソッドを記述しても問題はないですが、デフォ
+ルトセッティングをこのクラスに記述し、具体的な dispatch メソッドはサブ
+クラスで実装する方法をおすすめします。
+
+ここでは、対応するメソッドを HelloWorld::Pages::Index に記述します。
+dispatch_index という名前のメソッドをつくります。
+
+  package HelloWorld::Pages::Index;
+  use base qw(HelloWorld::Pages);
+
+  sub dispatch_index {
+      my $self = shift;
+      $self->tmpl->param(cur_date => scalar localtime);
+  }
+
+ここでは、テンプレート変数 cur_date に現在時刻を代入しています。
+
+=head2 TEMPLATE
+
+対応するテンプレートファイルを作成します。
+/usr/local/hw/template/index.html というファイルにHTMLを記述します。
+
+  <HTML>
+  <BODY>
+  Hello World! Current datetime is [% cur_date | html %]
+  </BODY>
+  </HTML>
+
+これで index.cgi をブラウザからたたくと、このHTMLが表示されたはずです。
+
+=head1 CONFIGURATION
+
+いろいろな設定を変更する方法を紹介します。
+
+=head2 TEMPLATE DIRECTORY
+
+テンプレートを格納するディレクトリは、クラスデータ tmpl_dirname として
+設定されています。ディレクトリを変更するには、新規 Pages クラスを作成
+し、クラスデータを set してください。
+
+   package YourProj::Pages::Foo;
+   use base qw(YourProj::Pages);
+  
+   __PACKAGE__->tmpl_dirname('foo');
+
+こうすると、$Config{TMPL_PATH}/foo/page名.html がロード対象になります。
+page 名は dispatch() の引数です。つまり、
+
+  YourProj::Pages::Foo->new->dispatch('bar');
+
+の場合、$Config{TMPL_PATH}/foo/bar.html がロードされます。
+
+=head2 TEMPLATE FILENAME
+
+dispatch('foo') で、foo.html 以外をロードしたい場合は、load_template() 
+メソッドを呼び出します。
+
+  $self->load_template('bar');
+
+=head2 AUTHORIZATION
+
+「このコンテンツは誰でも見れる、このコンテンツはログインしてないと見れ
+ない」ということは良くあると思います。Sledge では、各 Pages クラスに 
+create_authorizer() という factory method を定義し、Sledge::Authorizer 
+のサブクラスを返すことによって、ページごとの認証が可能です。
+
+たとえば、Cookie に foobar というパラメータを持つリクエストのみを受け
+付けるようにしてみましょう。YourProj::Authorizer::CookieFoobar を作成
+します。
+
+  package YourProj::Authorizer::CookieFoobar;
+  use base qw(Sledge::Authorizer);
+
+  use Apache::Cookie;
+
+  sub authorize {
+      my($self, $page) = @_;
+      my %cookie = Apache::Cookie->fetch;
+      unless ($cookie{foobar}) {
+          $page->redirect('/autherr.cgi');
+      }
+  }
+  
+  1;
+
+ここでは、認証に失敗すると、/autherr.cgi にリダイレクトされるように設
+定しました。現状のインターフェースでは、ここでリダイレクトをかます以外
+の処理は想定されていません。
+
+Pages クラスを継承して、create_authorizer をオーバーライドします。
+
+  package YourProj::Pages::NeedsCookieFoobar;
+  use base qw(YourProj::Pages);
+
+  use YourProj::Authorizer::CookieFoobar;
+  sub create_authorizer {
+      my $self = shift;
+      return YourProj::Authorizer::CookieFoobar->new($self);
+  }
+
+  sub dispatch_foo { }
+
+  1;
+
+あとは .cgi からこの Pages を呼び出せばOKです。
+
+   #!/usr/local/bin/perl
+   use YourProj::Pages::NeedsCookieFoobar;
+   YourProj::Pages::NeedsCookieFoobar->new->dispatch('foo');
+
+
+=head1 AUTHOR
+
+Tatsuhiko Miyagawa <miyagawa@edge.co.jp> with Sledge development team.
+
+=cut

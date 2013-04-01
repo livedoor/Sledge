@@ -1,0 +1,14 @@
+$Id: INSTALL,v 1.2 2003/02/14 07:58:25 miyagawa Exp $
+
+必須CPAN モジュールのインストール
+
+# perl -MCPAN -e 'install Bundle::Sledge'
+
+Sledge 基本モジュール群のインストール
+
+% perl Makefile.PL
+% make
+% make test
+# make install
+
+インストール後に必要な作業は lib/Sledge/Doc/Install.pod を参照してください。

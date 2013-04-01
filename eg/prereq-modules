@@ -1,0 +1,29 @@
+Apache::Request
+Apache::Reload
+CGI 2.47
+Test::Inline
+Carp::Assert
+Class::Fields
+Class::Accessor
+Class::Data::Inheritable
+Class::Singleton
+Class::Trigger
+Digest::SHA1
+File::Spec
+File::Temp
+HTML::FillInForm
+HTML::Template
+HTML::StickyQuery
+IO::Stringy
+Jcode
+LWP
+Test::Simple
+Test::Harness
+Time::HiRes
+URI
+Errno
+Template
+Data::Properties
+Error 0.15
+Storable
+Encode::compat

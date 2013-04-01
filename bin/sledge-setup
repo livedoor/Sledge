@@ -1,0 +1,41 @@
+#!/usr/local/bin/perl
+
+use File::Basename;
+use Getopt::Long;
+use Sledge::Install;
+
+# default
+my %options = (
+    pages => 'Apache',
+);
+
+GetOptions(
+    \%options,
+    'pages=s',
+);
+
+my $project = shift or do {
+    my $me = basename($0);
+    die <<DIE;
+Usage: $me [--pages=CGI] project_name
+DIE
+    ;
+};
+
+Sledge::Install->new($project, \%options)->setup;
+warn <<"WARN";
+
+Initial setup for $project is now finished.
+
+Remember:
+
+1) Edit $project/Config/_common.pm
+2) Make session table.
+
+    Thanks for using Sledge!
+              - Sledge development team
+
+WARN
+    ;
+
+
