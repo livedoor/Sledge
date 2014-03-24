@@ -55,6 +55,11 @@ use Class::Trigger qw(BEFORE_INIT AFTER_INIT BEFORE_DISPATCH AFTER_DISPATCH AFTE
 *register_hook = \&add_trigger;
 *invoke_hook   = \&call_trigger;
 
+sub bytes($) {
+    require bytes;
+    return length shift;
+}
+
 sub new {
     my $class = shift;
     my $self = bless {}, $class;
@@ -123,7 +128,7 @@ sub output_content {
     my $self = shift;
     $self->r->content_type($self->charset->content_type); # set
     my $content = $self->make_content;
-    $self->set_content_length(length $content);
+    $self->set_content_length(bytes $content);
     $self->send_http_header;
     $self->r->print($content);
     $self->invoke_hook('AFTER_OUTPUT');
